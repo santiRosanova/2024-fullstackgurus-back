@@ -208,11 +208,13 @@ def save_default_exercises():
             public = exercise['public']
             category_id = exercise['category_id']
             uid = "default"
+            training_muscle = exercise['training_muscle']
+            image_url = exercise['image_url']
 
             if isinstance(public, str):
                 public = True if public.lower() == 'true' else False
 
-            success = save_exercise_service(uid, name, calories_per_hour, public, category_id)
+            success = save_exercise_service(uid, name, calories_per_hour, public, category_id, training_muscle, image_url)
             if not success:
                 response.append({"exercise": exercise, "error": "Failed to save exercise"})
                 continue

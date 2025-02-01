@@ -69,13 +69,23 @@ def delete_exercise(uid, exercise_id):
         return False
 
 # Update Exercise
-def update_exercise(uid, exercise_id, update_data):
+def update_exercise(uid, exercise_id, update_data, old_image_url):
     try:
         exercise_ref = db.collection('exercises').document(exercise_id)
         exercise = exercise_ref.get()
 
         if not exercise.exists or exercise.to_dict().get('owner') != uid:
             return False
+        
+        if old_image_url != None:
+            bucket = storage_client.bucket("trainmate-pro.firebasestorage.app")
+
+            parsed_url = urlparse(old_image_url)
+            path = parsed_url.path.split("/o/")[-1].split("?")[0]
+            file_path = unquote(path)
+
+            blob = bucket.blob(file_path)
+            blob.delete()
 
         exercise_ref.update(update_data)
         return True

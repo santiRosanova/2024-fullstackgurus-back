@@ -131,6 +131,7 @@ def edit_exercise(exercise_id):
 
         # En vez de usar una validación rígida, validamos si se envió cada campo
         update_data = {}
+        old_image_url = None
         
         if 'name' in data:
             name = data['name']
@@ -152,6 +153,13 @@ def edit_exercise(exercise_id):
                 update_data['training_muscle'] = training_muscle
             else:
                 return jsonify({"error": "Invalid data type for 'training_muscle'"}), 400
+        
+        if 'image_url' in data:
+            image_url = data['image_url']
+            if isinstance(image_url, str):
+                update_data['image_url'] = image_url
+            else:
+                return jsonify({"error": "Invalid data type for 'image_url'"}), 400
 
         if 'public' in data:
             public = data['public']
@@ -161,11 +169,14 @@ def edit_exercise(exercise_id):
                 update_data['public'] = public
             else:
                 return jsonify({"error": "Invalid data type for 'public'"}), 400
+        
+        if 'old_image' in data and data['old_image'] != '':
+            old_image_url = data['old_image']
 
         if not update_data:
             return jsonify({"error": "No valid fields to update"}), 400
 
-        success = update_exercise_service(uid, exercise_id, update_data)
+        success = update_exercise_service(uid, exercise_id, update_data, old_image_url)
         if not success:
             return jsonify({"error": "Failed to update exercise"}), 404
 

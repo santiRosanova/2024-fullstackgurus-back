@@ -51,7 +51,14 @@ def create_goal_service(uid, data):
             return {"error": "End date must be after start date."}, 400
 
         # Set up the goal document reference and data
-        goal_ref = db.collection('goals').document(uid).collection('user_goals').document()
+        user_ref = db.collection('goals').document(uid)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            user_ref.set({})
+
+        goal_ref = user_ref.collection('user_goals').document()
+        
         goal_data = {
             "title": data.get("title"),
             "description": data.get("description"),

@@ -1,4 +1,5 @@
-from firebase_setup import db
+from firebase_setup import db, storage_client
+from urllib.parse import urlparse, unquote
 
 # Save Exercise
 def save_exercise(uid, name, calories_per_hour, public, category_id, training_muscle, image_url):
@@ -46,6 +47,19 @@ def delete_exercise(uid, exercise_id):
 
         if not exercise.exists or exercise.to_dict().get('owner') != uid:
             return False
+        
+        exercise_data = exercise.to_dict()
+        image_url = exercise_data.get("image_url")
+
+        if image_url:
+            bucket = storage_client.bucket("trainmate-pro.firebasestorage.app")
+
+            parsed_url = urlparse(image_url)
+            path = parsed_url.path.split("/o/")[-1].split("?")[0]
+            file_path = unquote(path)
+
+            blob = bucket.blob(file_path)
+            blob.delete()
 
         exercise_ref.delete()
         return True

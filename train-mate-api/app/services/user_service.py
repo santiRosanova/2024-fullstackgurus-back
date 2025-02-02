@@ -1,5 +1,6 @@
 from firebase_admin import auth
 from firebase_setup import db
+from app.services.challenges_service import create_challenges_service
 
 def verify_token_service(token):
     try:
@@ -36,6 +37,7 @@ def save_user_info_service(uid, data):
     # Guardar solo si hay datos válidos
     if user_data:
         user_ref.set(user_data)
+        create_challenges_service(uid)
     else:
         print(f"No hay datos válidos para guardar para el usuario {uid}.")
 

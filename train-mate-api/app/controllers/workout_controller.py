@@ -1,11 +1,12 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime
 from app.model.exercise import ExerciseType
 from app.services.user_service import verify_token_service
 from app.services.workout_service import save_user_workout, get_user_workouts, get_user_calories_from_workouts
 from app.services.exercise_service import get_exercise_by_id_service
 from app.services.trainings_service import get_training_by_id
 from app.services.workout_service import delete_user_workout
-
+from app.services.metadata_service import get_last_modified_timestamp, set_last_modified_timestamp
 
 workout_bp = Blueprint('workout_bp', __name__)
 
@@ -130,6 +131,48 @@ def cancel_workout(workout_id):
         # Attempt to delete the workout
         response, status_code = delete_user_workout(uid, workout_id)
         return jsonify(response), status_code
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': 'Something went wrong'}), 500
+    
+@workout_bp.route('/last-modified', methods=['GET'])
+def get_last_modified():
+    try:
+        token = request.headers.get('Authorization').split(' ')[1]
+        uid = verify_token_service(token)
+        if uid is None:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        last_modified = get_last_modified_timestamp(uid, 'workouts')
+
+        if not last_modified:
+            return jsonify({'last_modified_timestamp': None}), 200
+
+        if isinstance(last_modified, datetime):
+            timestamp_ms = int(last_modified.timestamp() * 1000)
+
+        return jsonify({'last_modified_timestamp': timestamp_ms}), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': 'Something went wrong'}), 500
+    
+@workout_bp.route('/update-last-modified', methods=['POST'])
+def update_last_modified():
+    try:
+        token = request.headers.get('Authorization').split(' ')[1]
+        uid = verify_token_service(token)
+        if uid is None:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        time = set_last_modified_timestamp(uid, 'workouts')
+        if not time:
+            return jsonify({'error': 'Error updating last modified timestamp'}), 500
+        if isinstance(time, datetime):
+            timestamp_ms = int(time.timestamp() * 1000)
+
+        return jsonify({'message': 'Last modified timestamp updated successfully', 'last_modified_timestamp': timestamp_ms}), 200
 
     except Exception as e:
         print(f"Error: {e}")

@@ -7,18 +7,8 @@ from app.services.category_service import (
     update_category as update_category_service,
     get_category_by_id as get_category_by_id_service,
 )
-from app import limiter
 from datetime import datetime
 from app.services.metadata_service import get_last_modified_timestamp, set_last_modified_timestamp
-
-
-def exempt_from_limit():
-    origin = request.headers.get('Origin') or request.headers.get('Referer') or request.host
-    print(f"Origin detected: {origin}")
-    if origin in ['http://localhost:3000', 'https://train-mate-front.vercel.app']:
-        return True
-    return False
-
 
 category_bp = Blueprint('category_bp', __name__)
 
@@ -74,7 +64,6 @@ def save_category():
 
 # Obtener categorías con Rate Limit
 @category_bp.route('/get-categories', methods=['GET'])
-@limiter.limit("10 per hour", exempt_when=exempt_from_limit)  # Limitar a 10 solicitudes por hora excepto orígenes permitidos
 def get_categories():
     try:
         token = request.headers.get('Authorization')

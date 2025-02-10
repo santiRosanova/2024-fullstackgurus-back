@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from app.model.exercise import ExerciseType
 from app.services.user_service import verify_token_service
 from app.services.workout_service import save_user_workout, get_user_workouts, get_user_calories_from_workouts
 from app.services.exercise_service import get_exercise_by_id_service

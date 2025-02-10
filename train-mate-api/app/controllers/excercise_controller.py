@@ -8,6 +8,7 @@ from app.services.exercise_service import (
     get_all_exercises as get_all_exercises_service,
     get_exercise_by_category_id as get_exercise_by_category_id_service,
 )
+from app.services.trainings_service import recalculate_calories_per_hour_mean_of_trainings_by_modified_excercise
 
 exercise_bp = Blueprint('exercise_bp', __name__)
 
@@ -177,6 +178,11 @@ def edit_exercise(exercise_id):
             return jsonify({"error": "No valid fields to update"}), 400
 
         success = update_exercise_service(uid, exercise_id, update_data, old_image_url)
+
+        # Si hubo un cambio de calories_per_hour, se debe recalcular el promedio de calories_per_hour en los trainings
+        if 'calories_per_hour' in update_data and success:
+            recalculate_calories_per_hour_mean_of_trainings_by_modified_excercise(uid, exercise_id)
+
         if not success:
             return jsonify({"error": "Failed to update exercise"}), 404
 

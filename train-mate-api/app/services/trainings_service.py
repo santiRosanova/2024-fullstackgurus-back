@@ -1,7 +1,5 @@
 from firebase_setup import db
-import json
 from collections import Counter
-from datetime import datetime
 
 def save_user_training(uid, data, exercises_ids, calories_per_hour_mean):
     user_ref = db.collection('trainings').document(uid)
@@ -108,3 +106,33 @@ def get_popular_exercises():
     except Exception as e:
         print(f"Error getting popular exercises: {e}")
         return []
+
+def recalculate_calories_per_hour_mean_of_trainings_by_modified_excercise(uid, excercise_id):
+    try:
+        # Get all user trainings
+        trainings_ref = db.collection('trainings').document(uid).collection('user_trainings')
+        trainings = trainings_ref.stream()
+
+        # Recalculate the calories per hour mean for each training that contains the modified exercise
+        for training in trainings:
+            training_data = training.to_dict()
+            exercise_ids = training_data.get('exercises', [])
+            if excercise_id in exercise_ids:
+                # Recalculate the calories per hour mean
+                calories_per_hour_sum = 0
+                for exercise_id in exercise_ids:
+                    exercise_doc = db.collection('exercises').document(exercise_id).get()
+                    if exercise_doc.exists:
+                        exercise_data = exercise_doc.to_dict()
+                        calories_per_hour_sum += exercise_data.get('calories_per_hour', 0)
+                calories_per_hour_mean = round(calories_per_hour_sum / len(exercise_ids))
+
+                # Update the training with the new calories per hour mean
+                training_ref = db.collection('trainings').document(uid).collection('user_trainings').document(training.id)
+                training_ref.update({
+                    'calories_per_hour_mean': calories_per_hour_mean
+                })
+
+    except Exception as e:
+        print(f"Error recalculating calories per hour mean: {e}")
+        return False

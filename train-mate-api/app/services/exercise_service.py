@@ -14,7 +14,7 @@ def save_exercise(uid, name, calories_per_hour, public, category_id, training_mu
             'image_url': image_url,
             'training_muscle': training_muscle
         }
-        exercise_ref.set(exercise_data)
+        exercise_ref.set(exercise_data.copy())
         exercise_data['id'] = exercise_ref.id
         return True, exercise_data
     except Exception as e:

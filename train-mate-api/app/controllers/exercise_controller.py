@@ -203,46 +203,6 @@ def get_all_exercises():
     except Exception as e:
         print(f"Error fetching exercises: {e}")
         return jsonify({"error": "Something went wrong"}), 500
-    
-# Save Exercise
-@exercise_bp.route('/save-default-exercises', methods=['POST'])
-def save_default_exercises():
-    try:
-        data = request.get_json()
-
-        if not isinstance(data, list):
-            return jsonify({"error": "Input should be a list of exercises"}), 400
-
-        response = []
-        for exercise in data:
-            validation_error = validate_body(exercise)
-            if validation_error:
-                response.append({"exercise": exercise, "error": validation_error[0]})
-                continue
-
-            name = exercise['name']
-            calories_per_hour = exercise['calories_per_hour']
-            public = exercise['public']
-            category_id = exercise['category_id']
-            uid = "default"
-            training_muscle = exercise['training_muscle']
-            image_url = exercise['image_url']
-
-            if isinstance(public, str):
-                public = True if public.lower() == 'true' else False
-
-            success = save_exercise_service(uid, name, calories_per_hour, public, category_id, training_muscle, image_url)
-            if not success:
-                response.append({"exercise": exercise, "error": "Failed to save exercise"})
-                continue
-
-            response.append({"exercise": exercise, "message": "Exercise saved successfully"})
-
-        return jsonify(response), 207
-
-    except Exception as e:
-        print(f"Error saving exercises: {e}")
-        return jsonify({"error": "Something went wrong"}), 500
 
 # Get Exercises by Category ID
 @exercise_bp.route('/get-exercises-by-category/<category_id>', methods=['GET'])

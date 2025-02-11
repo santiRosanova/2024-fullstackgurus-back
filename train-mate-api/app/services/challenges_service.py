@@ -24,11 +24,12 @@ def get_challenges_list_service(uid, type):
             challenges_data = challenge.to_dict()
             challenges_data['id'] = challenge.id
             challenges_list.append(challenges_data)
+
+        return challenges_list
     
     except Exception as e:
         print(f"Error getting challenges: {e}")
-
-    return challenges_list
+        return None
 
 def create_challenges_service(uid):
     try:

@@ -33,7 +33,7 @@ def create_app():
     from app.controllers.workout_controller import workout_bp
     app.register_blueprint(workout_bp, url_prefix='/api/workouts')
 
-    from app.controllers.excercise_controller import exercise_bp
+    from app.controllers.exercise_controller import exercise_bp
     app.register_blueprint(exercise_bp, url_prefix='/api/exercise')
 
     from app.controllers.category_controller import category_bp

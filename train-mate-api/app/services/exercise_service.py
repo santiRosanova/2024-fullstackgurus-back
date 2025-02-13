@@ -1,4 +1,5 @@
-from firebase_setup import db
+from firebase_setup import db, storage_client
+from urllib.parse import urlparse, unquote
 
 # Save Exercise
 def save_exercise(uid, name, calories_per_hour, public, category_id, training_muscle, image_url):
@@ -13,7 +14,7 @@ def save_exercise(uid, name, calories_per_hour, public, category_id, training_mu
             'image_url': image_url,
             'training_muscle': training_muscle
         }
-        exercise_ref.set(exercise_data)
+        exercise_ref.set(exercise_data.copy())
         exercise_data['id'] = exercise_ref.id
         return True, exercise_data
     except Exception as e:
@@ -46,6 +47,19 @@ def delete_exercise(uid, exercise_id):
 
         if not exercise.exists or exercise.to_dict().get('owner') != uid:
             return False
+        
+        exercise_data = exercise.to_dict()
+        image_url = exercise_data.get("image_url")
+
+        if image_url:
+            bucket = storage_client.bucket("trainmate-pro.firebasestorage.app")
+
+            parsed_url = urlparse(image_url)
+            path = parsed_url.path.split("/o/")[-1].split("?")[0]
+            file_path = unquote(path)
+
+            blob = bucket.blob(file_path)
+            blob.delete()
 
         exercise_ref.delete()
         return True
@@ -55,13 +69,23 @@ def delete_exercise(uid, exercise_id):
         return False
 
 # Update Exercise
-def update_exercise(uid, exercise_id, update_data):
+def update_exercise(uid, exercise_id, update_data, old_image_url):
     try:
         exercise_ref = db.collection('exercises').document(exercise_id)
         exercise = exercise_ref.get()
 
         if not exercise.exists or exercise.to_dict().get('owner') != uid:
             return False
+        
+        if old_image_url != None:
+            bucket = storage_client.bucket("trainmate-pro.firebasestorage.app")
+
+            parsed_url = urlparse(old_image_url)
+            path = parsed_url.path.split("/o/")[-1].split("?")[0]
+            file_path = unquote(path)
+
+            blob = bucket.blob(file_path)
+            blob.delete()
 
         exercise_ref.update(update_data)
         return True

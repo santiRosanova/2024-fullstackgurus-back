@@ -7,17 +7,8 @@ from app.services.category_service import (
     update_category as update_category_service,
     get_category_by_id as get_category_by_id_service,
 )
-from app import limiter
-
-
-
-def exempt_from_limit():
-    origin = request.headers.get('Origin') or request.headers.get('Referer') or request.host
-    print(f"Origin detected: {origin}")
-    if origin in ['http://localhost:3000', 'https://train-mate-front.vercel.app']:
-        return True
-    return False
-
+from datetime import datetime
+from app.services.metadata_service import get_last_modified_timestamp, set_last_modified_timestamp
 
 category_bp = Blueprint('category_bp', __name__)
 
@@ -73,7 +64,6 @@ def save_category():
 
 # Obtener categorías con Rate Limit
 @category_bp.route('/get-categories', methods=['GET'])
-@limiter.limit("10 per hour", exempt_when=exempt_from_limit)  # Limitar a 10 solicitudes por hora excepto orígenes permitidos
 def get_categories():
     try:
         token = request.headers.get('Authorization')
@@ -212,3 +202,45 @@ def save_default_category():
     except Exception as e:
         print(f"Error saving category: {e}")
         return jsonify({"error": "Something went wrong"}), 500
+    
+@category_bp.route('/last-modified', methods=['GET'])
+def get_last_modified():
+    try:
+        token = request.headers.get('Authorization').split(' ')[1]
+        uid = verify_token_service(token)
+        if uid is None:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        last_modified = get_last_modified_timestamp(uid, 'categories')
+
+        if not last_modified:
+            return jsonify({'last_modified_timestamp': None}), 200
+
+        if isinstance(last_modified, datetime):
+            timestamp_ms = int(last_modified.timestamp() * 1000)
+
+        return jsonify({'last_modified_timestamp': timestamp_ms}), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': 'Something went wrong'}), 500
+    
+@category_bp.route('/update-last-modified', methods=['POST'])
+def update_last_modified():
+    try:
+        token = request.headers.get('Authorization').split(' ')[1]
+        uid = verify_token_service(token)
+        if uid is None:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        time = set_last_modified_timestamp(uid, 'categories')
+        if not time:
+            return jsonify({'error': 'Error updating last modified timestamp'}), 500
+        if isinstance(time, datetime):
+            timestamp_ms = int(time.timestamp() * 1000)
+
+        return jsonify({'message': 'Last modified timestamp updated successfully', 'last_modified_timestamp': timestamp_ms}), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': 'Something went wrong'}), 500

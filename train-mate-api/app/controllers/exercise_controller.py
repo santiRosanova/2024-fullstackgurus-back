@@ -8,6 +8,7 @@ from app.services.exercise_service import (
     get_all_exercises as get_all_exercises_service,
     get_exercise_by_category_id as get_exercise_by_category_id_service,
 )
+from app.services.trainings_service import recalculate_calories_per_hour_mean_of_trainings_by_modified_excercise
 
 exercise_bp = Blueprint('exercise_bp', __name__)
 
@@ -131,6 +132,7 @@ def edit_exercise(exercise_id):
 
         # En vez de usar una validación rígida, validamos si se envió cada campo
         update_data = {}
+        old_image_url = None
         
         if 'name' in data:
             name = data['name']
@@ -152,6 +154,13 @@ def edit_exercise(exercise_id):
                 update_data['training_muscle'] = training_muscle
             else:
                 return jsonify({"error": "Invalid data type for 'training_muscle'"}), 400
+        
+        if 'image_url' in data:
+            image_url = data['image_url']
+            if isinstance(image_url, str):
+                update_data['image_url'] = image_url
+            else:
+                return jsonify({"error": "Invalid data type for 'image_url'"}), 400
 
         if 'public' in data:
             public = data['public']
@@ -161,11 +170,19 @@ def edit_exercise(exercise_id):
                 update_data['public'] = public
             else:
                 return jsonify({"error": "Invalid data type for 'public'"}), 400
+        
+        if 'old_image' in data and data['old_image'] != '':
+            old_image_url = data['old_image']
 
         if not update_data:
             return jsonify({"error": "No valid fields to update"}), 400
 
-        success = update_exercise_service(uid, exercise_id, update_data)
+        success = update_exercise_service(uid, exercise_id, update_data, old_image_url)
+
+        # Si hubo un cambio de calories_per_hour, se debe recalcular el promedio de calories_per_hour en los trainings
+        if 'calories_per_hour' in update_data and success:
+            recalculate_calories_per_hour_mean_of_trainings_by_modified_excercise(uid, exercise_id)
+
         if not success:
             return jsonify({"error": "Failed to update exercise"}), 404
 
@@ -185,44 +202,6 @@ def get_all_exercises():
 
     except Exception as e:
         print(f"Error fetching exercises: {e}")
-        return jsonify({"error": "Something went wrong"}), 500
-    
-# Save Exercise
-@exercise_bp.route('/save-default-exercises', methods=['POST'])
-def save_default_exercises():
-    try:
-        data = request.get_json()
-
-        if not isinstance(data, list):
-            return jsonify({"error": "Input should be a list of exercises"}), 400
-
-        response = []
-        for exercise in data:
-            validation_error = validate_body(exercise)
-            if validation_error:
-                response.append({"exercise": exercise, "error": validation_error[0]})
-                continue
-
-            name = exercise['name']
-            calories_per_hour = exercise['calories_per_hour']
-            public = exercise['public']
-            category_id = exercise['category_id']
-            uid = "default"
-
-            if isinstance(public, str):
-                public = True if public.lower() == 'true' else False
-
-            success = save_exercise_service(uid, name, calories_per_hour, public, category_id)
-            if not success:
-                response.append({"exercise": exercise, "error": "Failed to save exercise"})
-                continue
-
-            response.append({"exercise": exercise, "message": "Exercise saved successfully"})
-
-        return jsonify(response), 207
-
-    except Exception as e:
-        print(f"Error saving exercises: {e}")
         return jsonify({"error": "Something went wrong"}), 500
 
 # Get Exercises by Category ID

@@ -1,7 +1,5 @@
 from firebase_admin import auth
 
-
-
 def verify_token_service(token):
     try:
         decoded_token = auth.verify_id_token(token)

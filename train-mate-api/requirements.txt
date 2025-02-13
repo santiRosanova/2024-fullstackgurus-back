@@ -51,6 +51,7 @@ pytest==8.3.3
 pytest-cov==6.0.0
 pytest-mock==3.14.0
 python-dotenv==1.0.1
+pytz==2024.1
 requests==2.32.3
 rich==13.8.1
 rsa==4.9

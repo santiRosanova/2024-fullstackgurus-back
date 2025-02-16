@@ -26,7 +26,7 @@ def record_workout():
         if not training_id:
             return jsonify({'error': 'training_id is required'}), 400
         
-        if not isinstance(training_id, str) or not isinstance(data.get('duration'), (int, float)) or not isinstance(data.get('date'), str) or not isinstance(data.get('coach'), str):
+        if not isinstance(training_id, str) or not isinstance(data.get('duration'), int) or not isinstance(data.get('date'), str) or not isinstance(data.get('coach'), str):
             return jsonify({'error': 'Invalid data provided'}), 400
         
         if not (1 <= data["duration"] <= 1000):

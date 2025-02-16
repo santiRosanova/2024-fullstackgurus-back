@@ -4,16 +4,20 @@ from unittest.mock import patch, MagicMock
 from datetime import datetime
 
 def test_save_workout_success(client):
-    """
-    POST /save-workout => 201 on success, returns saved workout data.
-    """
     data = {
         "training_id": "training123",
-        "duration": 45
+        "duration": 45,
+        "date": "2025-01-01",
+        "coach": "SomeCoach"
     }
-    mock_workout = {"id": "workout123", "calories_burned": 300}
-
-    # We'll pretend training has cph_mean=400 => 400 / 60 * 45 => 300 cals
+    mock_workout = {
+        "id": "workout123",
+        "duration": 45,
+        "date": "2025-01-01",
+        "training_id": "training123",
+        "coach": "SomeCoach",
+        "total_calories": 300
+    }
     mock_training_data = {"calories_per_hour_mean": 400}
     with patch("app.controllers.workout_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.workout_controller.get_training_by_id", return_value=mock_training_data), \
@@ -44,18 +48,21 @@ def test_save_workout_missing_training_id(client):
     assert "training_id is required" in resp.get_json()["error"]
 
 def test_save_workout_invalid_duration(client):
-    """
-    If duration <= 0 => 400
-    """
-    data = {"training_id":"abc", "duration": 0}
-    with patch("app.controllers.workout_controller.verify_token_service", return_value="user123"), \
-         patch("app.controllers.workout_controller.get_training_by_id", return_value={"calories_per_hour_mean":400}):
+    # e.g. duration=0 => should 400 "Invalid duration provided"
+    data = {
+        "training_id": "abc",
+        "duration": 0,     # invalid
+        "date": "2025-01-01",
+        "coach": "CoachA"
+    }
+    with patch("app.controllers.workout_controller.verify_token_service", return_value="user123"):
         resp = client.post(
             "/api/workouts/save-workout",
             data=json.dumps(data),
             headers={"Content-Type": "application/json", "Authorization": "Bearer valid_token"}
         )
     assert resp.status_code == 400
+    # The code returns `'Invalid duration provided'`
     assert "Invalid duration" in resp.get_json()["error"]
 
 def test_save_workout_invalid_token(client):
@@ -73,12 +80,15 @@ def test_save_workout_invalid_token(client):
     assert "Invalid token" in resp.get_json()["error"]
 
 def test_save_workout_exception(client):
-    """
-    If an exception is raised => 500
-    """
-    data = {"training_id": "abc", "duration": 30}
+    data = {
+        "training_id": "abc",
+        "duration": 30,
+        "date": "2025-01-01",
+        "coach": "CoachA"
+    }
     with patch("app.controllers.workout_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.workout_controller.get_training_by_id", side_effect=Exception("DB error")):
+
         resp = client.post(
             "/api/workouts/save-workout",
             data=json.dumps(data),

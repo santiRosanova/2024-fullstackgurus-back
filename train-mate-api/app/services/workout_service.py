@@ -4,6 +4,7 @@ from firebase_setup import db
 from app.services.user_service import get_user_info_service
 from datetime import datetime
 from app.services.checkChallenges_service import check_and_update_workouts_challenges
+from app.services.trainings_service import get_training_by_id
 
 def save_user_workout(uid, data, calories_burned):
     user_ref = db.collection('workouts').document(uid)
@@ -12,11 +13,15 @@ def save_user_workout(uid, data, calories_burned):
     if not user_doc.exists:
         user_ref.set({})
 
+    trainingExists = get_training_by_id(uid, data['training_id'])
+    if not trainingExists:
+        return False, None
+
     # Convert the date from string to a datetime object
     if 'date' in data and isinstance(data['date'], str):
         try:
             date_obj = datetime.strptime(data['date'], '%Y-%m-%d')
-            date_obj = date_obj.replace(hour=10, minute=0) # Set default time a las 10:00 AM porque sino por el uso horario Firebase te lo tira -3 horas al dia anterior
+            date_obj = date_obj.replace(hour=0, minute=0) # Set default time a las 00:00 AM porque sino por el uso horario Firebase te lo tira -3 horas al dia anterior
         except ValueError:
             raise ValueError("Invalid date format. Use 'YYYY-MM-DD'.")
     else:

@@ -9,10 +9,10 @@ from app.services.category_service import (
 )
 from datetime import datetime
 from app.services.metadata_service import get_last_modified_timestamp, set_last_modified_timestamp
+from app.assets.icons_list import get_icons
 
 category_bp = Blueprint('category_bp', __name__)
 
-# Valida la estructura y los datos de la categoría
 def validate_category(data):
     name = data.get('name')
     icon = data.get('icon')
@@ -26,7 +26,6 @@ def validate_category(data):
 
     return None
 
-# Guardar una categoría
 @category_bp.route('/save-category', methods=['POST'])
 def save_category():
     try:
@@ -48,8 +47,12 @@ def save_category():
 
         name = data['name']
         icon = data['icon']
-        isCustom = data['isCustom']
+        isCustom = True if data['isCustom'] else True
         owner = uid if isCustom else None
+
+        icons_list = get_icons()
+        if icon not in icons_list:
+            return jsonify({"error": "Invalid icon"}), 400
 
         success, category = save_category_service(name, icon, isCustom, owner)
         if not success:
@@ -62,7 +65,6 @@ def save_category():
         return jsonify({"error": "Something went wrong"}), 500
     
 
-# Obtener categorías con Rate Limit
 @category_bp.route('/get-categories', methods=['GET'])
 def get_categories():
     try:
@@ -85,7 +87,6 @@ def get_categories():
         return jsonify({"error": "Something went wrong"}), 500
 
 
-# Eliminar categoría
 @category_bp.route('/delete-category/<category_id>', methods=['DELETE'])
 def delete_category(category_id):
     try:
@@ -109,7 +110,7 @@ def delete_category(category_id):
         print(f"Error deleting category: {e}")
         return jsonify({"error": "Something went wrong"}), 500
 
-# Editar categoría
+
 @category_bp.route('/edit-category/<category_id>', methods=['PUT'])
 def edit_category(category_id):
     try:
@@ -125,6 +126,8 @@ def edit_category(category_id):
             return jsonify({"error": "Invalid token"}), 403
 
         update_data = {}
+
+        icons_list = get_icons()
         
         if 'name' in data:
             if isinstance(data['name'], str):
@@ -135,6 +138,8 @@ def edit_category(category_id):
         if 'icon' in data:
             if isinstance(data['icon'], str):
                 update_data['icon'] = data['icon']
+            elif data['icon'] not in icons_list:
+                return jsonify({"error": "Invalid icon"}), 400
             else:
                 return jsonify({"error": "Invalid data type for 'icon'"}), 400
 
@@ -178,30 +183,30 @@ def get_category_by_id(category_id):
         return jsonify({"error": "Something went wrong"}), 500
 
 
-# Guardar una categoría pública/default
-@category_bp.route('/save-default-category', methods=['POST'])
-def save_default_category():
-    try:
-        data = request.get_json()
+# Guardar una categoría pública/default (no la expongo en la API)
+# @category_bp.route('/save-default-category', methods=['POST'])
+# def save_default_category():
+#     try:
+#         data = request.get_json()
 
-        validation_error = validate_category(data)
-        if validation_error:
-            return jsonify(validation_error[0]), validation_error[1]
+#         validation_error = validate_category(data)
+#         if validation_error:
+#             return jsonify(validation_error[0]), validation_error[1]
 
-        name = data['name']
-        icon = data['icon']
-        isCustom = data['isCustom']
-        owner = None
+#         name = data['name']
+#         icon = data['icon']
+#         isCustom = data['isCustom']
+#         owner = None
 
-        success, category_id = save_category_service(name, icon, isCustom, owner)
-        if not success:
-            return jsonify({"error": "Failed to save category"}), 500
+#         success, category_id = save_category_service(name, icon, isCustom, owner)
+#         if not success:
+#             return jsonify({"error": "Failed to save category"}), 500
 
-        return jsonify({"message": "Category saved successfully", "category_id": category_id}), 201
+#         return jsonify({"message": "Category saved successfully", "category_id": category_id}), 201
 
-    except Exception as e:
-        print(f"Error saving category: {e}")
-        return jsonify({"error": "Something went wrong"}), 500
+#     except Exception as e:
+#         print(f"Error saving category: {e}")
+#         return jsonify({"error": "Something went wrong"}), 500
     
 @category_bp.route('/last-modified', methods=['GET'])
 def get_last_modified():
@@ -232,7 +237,7 @@ def update_last_modified():
         uid = verify_token_service(token)
         if uid is None:
             return jsonify({'error': 'Invalid token'}), 401
-        
+
         time = set_last_modified_timestamp(uid, 'categories')
         if not time:
             return jsonify({'error': 'Error updating last modified timestamp'}), 500

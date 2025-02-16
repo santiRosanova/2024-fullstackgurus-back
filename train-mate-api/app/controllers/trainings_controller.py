@@ -16,6 +16,12 @@ def save_training():
 
         data = request.get_json()
 
+        if not data.get('exercises'):
+            return jsonify({'error': 'Missing exercises'}), 400
+        
+        if not data.get('name'):
+            return jsonify({'error': 'Missing training name'}), 400
+
         exercises = data.get('exercises')
         calories_per_hour_sum = 0
         exercises_ids = []

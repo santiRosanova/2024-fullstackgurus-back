@@ -22,11 +22,25 @@ def add_water_intake():
         uid = verify_token_service(token)
         if not uid:
             return jsonify({"error": "Invalid token"}), 403
-
-        # Obtener los datos del body
+        
         data = request.get_json()
+
+        if not data.get('date') or not data.get('quantity_in_militers'):
+            return jsonify({"error": "Invalid water intake data"}), 400
+        
+        if not isinstance(data.get('quantity_in_militers'), int):
+            return jsonify({"error": "Invalid water quantity"}), 400
+        
+        if not isinstance(data.get('date'), str):
+            return jsonify({"error": "Invalid date format"}), 400
+        
+        try:
+            datetime.strptime(data.get('date'), '%Y-%m-%d')
+        except ValueError:
+            return {"error": "Invalid date format, should be YYYY-MM-DD"}, 400
+
         quantity_in_militers = data.get('quantity_in_militers')
-        date = data.get('date', datetime.now().strftime('%Y-%m-%d'))  # Si no envían fecha, usar la actual
+        date = data.get('date')
         public = data.get('public', False)
 
         # Validar que se envió la cantidad de agua en mililitros

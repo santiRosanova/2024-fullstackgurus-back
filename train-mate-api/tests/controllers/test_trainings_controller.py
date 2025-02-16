@@ -45,9 +45,10 @@ def test_save_training_success(client):
         "exercises": [
             {"id": "ex1", "calories_per_hour": 300},
             {"id": "ex2", "calories_per_hour": 400}
-        ]
+        ], 
+        "name": "My Training"
     }
-    mock_saved_training = {"id": "new_training_id", "exercises": ["ex1", "ex2"]}
+    mock_saved_training = {"id": "new_training_id", "exercises": ["ex1", "ex2"], "name": "My Training", "calories_per_hour_mean": 350}
 
     with patch("app.controllers.trainings_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.trainings_controller.save_user_training", return_value=mock_saved_training):
@@ -70,7 +71,8 @@ def test_save_training_invalid_token(client):
         "exercises": [
             {"id": "ex1", "calories_per_hour": 300},
             {"id": "ex2", "calories_per_hour": 400}
-        ]
+        ],
+        "name": "My Training"
     }
     with patch("app.controllers.trainings_controller.verify_token_service", return_value=None):
         response = client.post(
@@ -82,17 +84,15 @@ def test_save_training_invalid_token(client):
     assert "Invalid token" in response.get_json()["error"]
 
 def test_save_training_exception(client):
-    """
-    If something raises an Exception => 500
-    """
     data = {
         "exercises": [
             {"id": "ex1", "calories_per_hour": 300},
-        ]
+        ],
+        "name": "Cause DB error"
     }
     with patch("app.controllers.trainings_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.trainings_controller.save_user_training", side_effect=Exception("DB error")):
-        
+
         response = client.post(
             "/api/trainings/save-training",
             data=json.dumps(data),

@@ -6,7 +6,7 @@ def test_save_user_info_success(client):
     """
     POST /save-user-info => 201 on success.
     """
-    data = {"name": "John Doe", "email": "john@example.com"}
+    data = {"name": "John Doe", "email": "john@example.com", "sex": "male", "weight": 70, "height": 180, "birthday": "1990-01-01"}
     with patch("app.controllers.user_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.user_controller.save_user_info_service") as mock_save:
         
@@ -20,7 +20,7 @@ def test_save_user_info_success(client):
         )
     assert resp.status_code == 201
     resp_json = resp.get_json()
-    assert resp_json["message"] == "Información guardada correctamente"
+    assert resp_json["message"] == "User data saved successfully"
     # Check that service was called with (uid="user123", data)
     mock_save.assert_called_once_with("user123", data)
 
@@ -39,13 +39,13 @@ def test_save_user_info_invalid_token(client):
             }
         )
     assert resp.status_code == 401
-    assert "Token inválido" in resp.get_json()["error"]
+    assert "Invalid token" in resp.get_json()["error"]
 
 def test_save_user_info_exception(client):
     """
     If an exception is raised => 500
     """
-    data = {"name": "John Doe"}
+    data = {"name": "John Doe", "email": "john@example.com", "sex": "male", "weight": 70, "height": 180, "birthday": "1990-01-01"}
     with patch("app.controllers.user_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.user_controller.save_user_info_service", side_effect=Exception("DB error")):
         
@@ -58,7 +58,7 @@ def test_save_user_info_exception(client):
             }
         )
     assert resp.status_code == 500
-    assert "Algo salió mal" in resp.get_json()["error"]
+    assert "Something went wrong" in resp.get_json()["error"]
 
 def test_get_user_info_success(client):
     """
@@ -97,7 +97,7 @@ def test_get_user_info_invalid_token(client):
             headers={"Authorization": "Bearer invalid_token"}
         )
     assert resp.status_code == 401
-    assert "Token inválido" in resp.get_json()["error"]
+    assert "Invalid token" in resp.get_json()["error"]
 
 def test_get_user_info_exception(client):
     """
@@ -111,7 +111,7 @@ def test_get_user_info_exception(client):
             headers={"Authorization": "Bearer valid_token"}
         )
     assert resp.status_code == 500
-    assert "Algo salió mal" in resp.get_json()["error"]
+    assert "Something went wrong" in resp.get_json()["error"]
 
 def test_update_user_info_success(client):
     """
@@ -131,7 +131,7 @@ def test_update_user_info_success(client):
         )
     assert resp.status_code == 200
     resp_json = resp.get_json()
-    assert resp_json["message"] == "Información actualizada correctamente"
+    assert resp_json["message"] == "Data updated successfully"
     mock_update.assert_called_once_with("user123", data)
 
 def test_update_user_info_invalid_token(client):
@@ -146,7 +146,7 @@ def test_update_user_info_invalid_token(client):
             }
         )
     assert resp.status_code == 401
-    assert "Token inválido" in resp.get_json()["error"]
+    assert "Invalid token" in resp.get_json()["error"]
 
 def test_update_user_info_exception(client):
     data = {"name": "Crash"}
@@ -162,4 +162,4 @@ def test_update_user_info_exception(client):
             }
         )
     assert resp.status_code == 500
-    assert "Algo salió mal" in resp.get_json()["error"]
+    assert "Something went wrong" in resp.get_json()["error"]

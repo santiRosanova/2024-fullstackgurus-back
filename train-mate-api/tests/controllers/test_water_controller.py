@@ -9,7 +9,8 @@ def test_add_water_intake_success(client):
     """
     mock_data = {
         "quantity_in_militers": 500,
-        "public": True
+        "public": True,
+        "date": "2025-10-10"
     }
     with patch("app.controllers.water_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.water_controller.add_water_intake_service", return_value=True) as mock_add:
@@ -44,13 +45,13 @@ def test_add_water_intake_missing_qty(client):
             }
         )
     assert response.status_code == 400
-    assert "Invalid water quantity" in response.get_json()["error"]
+    assert "Invalid water intake data" in response.get_json()["error"]
 
 def test_add_water_intake_invalid_token(client):
     """
     If token is invalid => 403
     """
-    mock_data = {"quantity_in_militers": 500}
+    mock_data = {"quantity_in_militers": 500, "date": "2025-10-10"}
     with patch("app.controllers.water_controller.verify_token_service", return_value=None):
         response = client.post(
             "/api/water-intake/add",
@@ -75,7 +76,7 @@ def test_add_water_intake_service_failure(client):
     """
     If add_water_intake_service returns False => 500
     """
-    mock_data = {"quantity_in_militers": 500}
+    mock_data = {"quantity_in_militers": 500, "date": "2025-10-10"}
     with patch("app.controllers.water_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.water_controller.add_water_intake_service", return_value=False):
         
@@ -94,7 +95,7 @@ def test_add_water_intake_exception(client):
     """
     If an exception is raised => 500
     """
-    mock_data = {"quantity_in_militers": 500}
+    mock_data = {"quantity_in_militers": 500, "date": "2025-10-10"}
     with patch("app.controllers.water_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.water_controller.add_water_intake_service", side_effect=Exception("DB error")):
         

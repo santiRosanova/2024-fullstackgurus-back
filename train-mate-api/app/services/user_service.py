@@ -37,7 +37,7 @@ def save_user_info_service(uid, data):
         user_ref.set(user_data)
         create_challenges_service(uid)
     else:
-        print(f"No hay datos válidos para guardar para el usuario {uid}.")
+        print(f"There is no valid data for {uid}.")
 
 def get_user_info_service(uid):
     user_ref = db.collection('users').document(uid)

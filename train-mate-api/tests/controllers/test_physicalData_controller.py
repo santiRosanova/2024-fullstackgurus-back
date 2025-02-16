@@ -32,7 +32,7 @@ def test_add_physical_data_success(client):
         "weight": 70,
         "body_fat": 15,
         "body_muscle": 40,
-        # date is optional in request; if missing, server uses today's date
+        "date": "2025-01-01"
     }
 
     with patch("app.controllers.physicalData_controller.verify_token_service", return_value="user123"), \
@@ -56,7 +56,8 @@ def test_add_physical_data_missing_params(client):
     # Missing body_muscle
     mock_data = {
         "weight": 70,
-        "body_fat": 15
+        "body_fat": 15,
+        "date": "2025-01-01"
     }
     with patch("app.controllers.physicalData_controller.verify_token_service", return_value="user123"):
         resp = client.post(
@@ -68,7 +69,7 @@ def test_add_physical_data_missing_params(client):
             }
         )
     assert resp.status_code == 400
-    assert "Missing parameters" in resp.get_json()["error"]
+    assert "Missing data" in resp.get_json()["error"]
 
 def test_add_physical_data_invalid_token(client):
     """
@@ -91,7 +92,7 @@ def test_add_physical_data_service_failure(client):
     """
     If add_physical_data_service returns False => 500.
     """
-    mock_data = {"weight": 70, "body_fat": 15, "body_muscle": 40}
+    mock_data = {"weight": 70, "body_fat": 15, "body_muscle": 40, "date": "2025-01-01"}
     with patch("app.controllers.physicalData_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.physicalData_controller.add_physical_data_service", return_value=False):
         

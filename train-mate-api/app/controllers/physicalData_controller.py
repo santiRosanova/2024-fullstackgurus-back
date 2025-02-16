@@ -11,7 +11,6 @@ physicalData_bp = Blueprint('physicalData_bp', __name__)
 @physicalData_bp.route('/add', methods=['POST'])
 def add_physical_data():
     try:
-        # Obtener el token de autorización y verificar el usuario
         token = request.headers.get('Authorization')
         if not token or 'Bearer ' not in token:
             return jsonify({"error": "Authorization token missing"}), 403
@@ -21,7 +20,6 @@ def add_physical_data():
         if not uid:
             return jsonify({"error": "Invalid token"}), 403
 
-        # Obtener los datos del body
         data = request.get_json()
         weight = data.get('weight')
         body_fat = data.get('body_fat')
@@ -44,7 +42,6 @@ def add_physical_data():
 @physicalData_bp.route('/get-physical-data', methods=['GET'])
 def get_physical_data():
     try:
-        # Obtener el token de autorización y verificar el usuario
         token = request.headers.get('Authorization')
         if not token or 'Bearer ' not in token:
             return jsonify({"error": "Authorization token missing"}), 403

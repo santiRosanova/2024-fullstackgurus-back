@@ -65,31 +65,24 @@ def get_training_by_id(uid, training_id):
 
 def get_popular_exercises():
     try:
-        # Acceder a todos los documentos en la colección `trainings`
-        trainings_ref = db.collection_group('user_trainings')  # Esto accede a todos los user_trainings de todos los usuarios
+        trainings_ref = db.collection_group('user_trainings')
         trainings = trainings_ref.stream()
 
-        # Crear un contador para contar la frecuencia de cada ejercicio
         exercise_counter = Counter()
 
-        # Recorrer todos los entrenamientos y contar los ejercicios
         for training in trainings:
             training_data = training.to_dict()
             exercise_ids = training_data.get('exercises', [])
             
-            # Contar cuántas veces aparece cada ejercicio
             for exercise_id in exercise_ids:
-                # Asegurarse de que el ejercicio es público
                 exercise_doc = db.collection('exercises').document(exercise_id).get()
                 if exercise_doc.exists:
                     exercise_data = exercise_doc.to_dict()
-                    if exercise_data.get('public', False):  # Solo contar ejercicios públicos
+                    if exercise_data.get('public', False):
                         exercise_counter[exercise_id] += 1
 
-        # Obtener los 5 ejercicios más populares
         most_common_exercises = exercise_counter.most_common(5)
 
-        # Formatear los resultados para devolver ejercicio_id, nombre y cantidad de veces que lo hicieron
         popular_exercises = []
         for exercise_id, count in most_common_exercises:
             exercise_doc = db.collection('exercises').document(exercise_id).get()
@@ -109,16 +102,13 @@ def get_popular_exercises():
 
 def recalculate_calories_per_hour_mean_of_trainings_by_modified_excercise(uid, excercise_id):
     try:
-        # Get all user trainings
         trainings_ref = db.collection('trainings').document(uid).collection('user_trainings')
         trainings = trainings_ref.stream()
 
-        # Recalculate the calories per hour mean for each training that contains the modified exercise
         for training in trainings:
             training_data = training.to_dict()
             exercise_ids = training_data.get('exercises', [])
             if excercise_id in exercise_ids:
-                # Recalculate the calories per hour mean
                 calories_per_hour_sum = 0
                 for exercise_id in exercise_ids:
                     exercise_doc = db.collection('exercises').document(exercise_id).get()
@@ -126,8 +116,6 @@ def recalculate_calories_per_hour_mean_of_trainings_by_modified_excercise(uid, e
                         exercise_data = exercise_doc.to_dict()
                         calories_per_hour_sum += exercise_data.get('calories_per_hour', 0)
                 calories_per_hour_mean = round(calories_per_hour_sum / len(exercise_ids))
-
-                # Update the training with the new calories per hour mean
                 training_ref = db.collection('trainings').document(uid).collection('user_trainings').document(training.id)
                 training_ref.update({
                     'calories_per_hour_mean': calories_per_hour_mean

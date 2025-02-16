@@ -4,11 +4,9 @@ from app.services.checkChallenges_service import check_and_update_physical_chall
 
 def add_physical_data_service(uid, body_fat, body_muscle, weight, date):
     try:
-        # Referencia al documento del usuario
         user_ref = db.collection('physical_data').document(uid)
         user_doc = user_ref.get()
 
-        # Si el documento no existe, lo creamos
         if not user_doc.exists:
             user_ref.set({})
 

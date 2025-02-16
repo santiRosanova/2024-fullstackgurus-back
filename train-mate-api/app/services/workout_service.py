@@ -72,8 +72,11 @@ def get_user_workouts(uid, start_date=None, end_date=None):
         # Obtener los workouts filtrados (o todos si no se pasa ningún filtro)
         workouts = user_workouts_ref.stream()
 
-    except ValueError:
-        return {"error": "Formato de fecha inválido. Usa 'YYYY-MM-DD'."}
+    except (ValueError, Exception):
+        if ValueError:
+            return {"error": "Invalid date. Use 'YYYY-MM-DD'."}
+        else:
+            return []
 
     # Parse each document and store it in a list
     workout_list = []
@@ -99,11 +102,11 @@ def get_user_calories_from_workouts(uid, start_date=None, end_date=None):
             end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
             user_workouts_ref = user_workouts_ref.where('date', '<=', end_datetime)
 
-        # Obtener los workouts filtrados (o todos si no se pasa ningún filtro)
-        workouts = user_workouts_ref.stream()
-
-    except ValueError:
-        return {"error": "Formato de fecha inválido. Usa 'YYYY-MM-DD'."}
+    except (ValueError, Exception):
+        if ValueError:
+            return {"error": "Invalid date. Use 'YYYY-MM-DD'."}
+        else:
+            return []
 
     # Get all documents from the subcollection
     workouts = user_workouts_ref.stream()
@@ -122,8 +125,6 @@ def get_user_calories_from_workouts(uid, start_date=None, end_date=None):
         workout_training_id_list.append(workout_training_id)
 
     return workout_calories_list, workout_dates_list, workout_training_id_list
-
-
 
 def delete_user_workout(uid, workout_id):
     # Reference to the specific workout document

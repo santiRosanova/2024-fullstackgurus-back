@@ -13,7 +13,6 @@ def verify_token_service(token):
 def save_user_info_service(uid, data):
     user_ref = db.collection('users').document(uid)
     
-    # Crear el diccionario solo con los valores que no sean None
     user_data = {}
     
     if 'email' in data and data['email'] is not None:
@@ -34,7 +33,6 @@ def save_user_info_service(uid, data):
     if 'birthday' in data and data['birthday'] is not None:
         user_data['birthday'] = data['birthday']
 
-    # Guardar solo si hay datos válidos
     if user_data:
         user_ref.set(user_data)
         create_challenges_service(uid)
@@ -84,7 +82,3 @@ def update_user_info_service(uid, data):
 
     if update_data:
         user_ref.update(update_data)
-
-def delete_user_service(uid):
-    user_ref = db.collection('users').document(uid)
-    user_ref.delete()

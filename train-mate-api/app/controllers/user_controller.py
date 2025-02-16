@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.services.user_service import save_user_info_service, verify_token_service, get_user_info_service, update_user_info_service, delete_user_service
+from app.services.user_service import save_user_info_service, verify_token_service, get_user_info_service, update_user_info_service
 
 user_bp = Blueprint('user_bp', __name__)
 
@@ -52,23 +52,6 @@ def update_user_info():
         update_user_info_service(uid, data)
 
         return jsonify({'message': 'Información actualizada correctamente'}), 200
-
-    except Exception as e:
-        print(e)
-        return jsonify({'error': 'Algo salió mal'}), 500
-
-
-@user_bp.route('/delete-user', methods=['DELETE'])
-def delete_user():
-    try:
-        token = request.headers.get('Authorization').split(' ')[1]
-        uid = verify_token_service(token)
-        if uid is None:
-            return jsonify({'error': 'Token inválido'}), 401
-
-        delete_user_service(uid)
-
-        return jsonify({'message': 'Usuario eliminado correctamente'}), 200
 
     except Exception as e:
         print(e)

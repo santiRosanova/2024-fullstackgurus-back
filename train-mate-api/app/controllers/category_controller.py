@@ -23,6 +23,9 @@ def validate_category(data):
 
     if not isinstance(name, str) or not isinstance(icon, str) or not isinstance(isCustom, bool):
         return {"error": "Invalid data types"}, 400
+    
+    if not isCustom:
+        return {"error": "Invalid data for 'isCustom', it should be True"}, 400
 
     return None
 
@@ -47,7 +50,7 @@ def save_category():
 
         name = data['name']
         icon = data['icon']
-        isCustom = True if data['isCustom'] else True
+        isCustom = data['isCustom']
         owner = uid if isCustom else None
 
         icons_list = get_icons()

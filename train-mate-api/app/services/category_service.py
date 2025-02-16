@@ -65,7 +65,6 @@ def get_category_by_id(uid, category_id):
         return None
 
 
-# Eliminar categoría
 def delete_category(uid, category_id):
     try:
         category_ref = db.collection('categories').document(category_id)
@@ -81,7 +80,6 @@ def delete_category(uid, category_id):
         print(f"Error deleting category in Firestore: {e}")
         return False
 
-# Actualizar categoría
 def update_category(uid, category_id, update_data):
     try:
         category_ref = db.collection('categories').document(category_id)

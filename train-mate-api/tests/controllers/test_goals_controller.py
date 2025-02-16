@@ -11,8 +11,6 @@ def mock_verify_token(token):
     ("/api/goals/get-all-goals", "GET"),
     ("/api/goals/create-goal", "POST"),
     ("/api/goals/get-goal/fake_goal_id", "GET"),
-    ("/api/goals/update-goal/fake_goal_id", "PUT"),
-    ("/api/goals/delete-goal/fake_goal_id", "DELETE"),
     ("/api/goals/complete-goal/fake_goal_id", "PATCH"),
 ])
 def test_missing_auth(client, endpoint, method):
@@ -38,8 +36,8 @@ def test_missing_auth(client, endpoint, method):
 def test_get_all_goals_success(client):
     """GET /get-all-goals => 200 on success with a list of goals."""
     mock_goals = [
-        {"id": "g1", "title": "Goal 1"},
-        {"id": "g2", "title": "Goal 2"}
+        {"id": "g1", "title": "Goal 1", "description": "Test Desc", "startDate": "2025-07-01", "endDate": "2025-07-31"},
+        {"id": "g2", "title": "Goal 2", "description": "Test Desc", "startDate": "2025-08-01", "endDate": "2025-08-31"}
     ]
     with patch("app.controllers.goals_controller.verify_token_service", return_value="user123"), \
          patch("app.controllers.goals_controller.get_all_goals_service", return_value=mock_goals):
@@ -80,6 +78,8 @@ def test_create_goal_success(client):
         "id": "new_goal_id",
         "title": "New Goal",
         "description": "Test Desc",
+        "startDate": "2025-10-01",
+        "endDate": "2025-10-31",
         "completed": False
     }
     with patch("app.controllers.goals_controller.verify_token_service", return_value="user123"), \
@@ -87,7 +87,7 @@ def test_create_goal_success(client):
         
         resp = client.post(
             "/api/goals/create-goal",
-            data=json.dumps({"title": "New Goal", "description": "Test Desc"}),
+            data=json.dumps({"title": "New Goal", "description": "", "startDate":"2025-10-01", "endDate":"2025-10-31"}),
             headers={"Content-Type": "application/json", "Authorization": "Bearer valid_token"}
         )
     assert resp.status_code == 201
@@ -114,7 +114,7 @@ def test_create_goal_service_tuple_400(client):
         
         resp = client.post(
             "/api/goals/create-goal",
-            data=json.dumps({"title": "Goal with bad date", "startDate":"2020-01-01"}),
+            data=json.dumps({"title": "Goal with bad date", "description": "", "startDate":"2025-10-01", "endDate":"2025-10-31"}),
             headers={"Content-Type": "application/json", "Authorization": "Bearer valid_token"}
         )
     assert resp.status_code == 400
@@ -127,7 +127,7 @@ def test_create_goal_service_none(client):
         
         resp = client.post(
             "/api/goals/create-goal",
-            data=json.dumps({"title": "Goal", "description":"testdesc"}),
+            data=json.dumps({"title": "Goal", "description":"testdesc", "startDate":"2025-10-01", "endDate":"2025-10-31"}),
             headers={"Content-Type": "application/json", "Authorization": "Bearer valid_token"}
         )
     assert resp.status_code == 500
@@ -157,72 +157,6 @@ def test_get_goal_not_found(client):
         )
     assert resp.status_code == 404
     assert "Goal not found" in resp.get_json()["error"]
-
-def test_update_goal_success(client):
-    """PUT /update-goal/<goal_id> => 200 if success."""
-    mock_updated_goal = {
-        "id": "g123",
-        "title": "Updated Title",
-        "description": "Updated Desc"
-    }
-    with patch("app.controllers.goals_controller.verify_token_service", return_value="user123"), \
-         patch("app.controllers.goals_controller.update_goal_service", return_value=mock_updated_goal):
-        
-        resp = client.put(
-            "/api/goals/update-goal/g123",
-            data=json.dumps({"title": "Updated Title", "description":"Updated Desc"}),
-            headers={"Content-Type": "application/json", "Authorization": "Bearer valid_token"}
-        )
-    assert resp.status_code == 200
-    assert resp.get_json()["id"] == "g123"
-
-def test_update_goal_invalid_data(client):
-    """If we pass no data => 400."""
-    with patch("app.controllers.goals_controller.verify_token_service", return_value="user123"):
-        resp = client.put(
-            "/api/goals/update-goal/g123",
-            data=json.dumps({}),  # no fields
-            headers={"Content-Type": "application/json", "Authorization": "Bearer valid_token"}
-        )
-    assert resp.status_code == 400
-    assert "Invalid data" in resp.get_json()["error"]
-
-def test_update_goal_service_failure(client):
-    """If update_goal_service returns None => 500."""
-    with patch("app.controllers.goals_controller.verify_token_service", return_value="user123"), \
-         patch("app.controllers.goals_controller.update_goal_service", return_value=None):
-        
-        resp = client.put(
-            "/api/goals/update-goal/g123",
-            data=json.dumps({"title":"new title"}),
-            headers={"Content-Type": "application/json", "Authorization": "Bearer valid_token"}
-        )
-    assert resp.status_code == 500
-    assert "Failed to update goal" in resp.get_json()["error"]
-
-def test_delete_goal_success(client):
-    """DELETE /delete-goal/<goal_id> => 200 if success."""
-    with patch("app.controllers.goals_controller.verify_token_service", return_value="user123"), \
-         patch("app.controllers.goals_controller.delete_goal_service", return_value=True):
-        
-        resp = client.delete(
-            "/api/goals/delete-goal/gABC",
-            headers={"Authorization": "Bearer valid_token"}
-        )
-    assert resp.status_code == 200
-    assert resp.get_json()["message"] == "Goal deleted successfully"
-
-def test_delete_goal_service_failure(client):
-    """If delete_goal_service returns False => 500."""
-    with patch("app.controllers.goals_controller.verify_token_service", return_value="user123"), \
-         patch("app.controllers.goals_controller.delete_goal_service", return_value=False):
-        
-        resp = client.delete(
-            "/api/goals/delete-goal/g999",
-            headers={"Authorization": "Bearer valid_token"}
-        )
-    assert resp.status_code == 500
-    assert "Failed to delete goal" in resp.get_json()["error"]
 
 def test_complete_goal_success(client):
     """PATCH /complete-goal/<goal_id> => 200 if success."""

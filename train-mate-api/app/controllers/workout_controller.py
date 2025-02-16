@@ -25,13 +25,22 @@ def record_workout():
         training_id = data.get('training_id')
         if not training_id:
             return jsonify({'error': 'training_id is required'}), 400
+        
+        if not isinstance(training_id, str) or not isinstance(data.get('duration'), int) or not isinstance(data.get('date'), str) or not isinstance(data.get('coach'), str):
+            return jsonify({'error': 'Invalid data provided'}), 400
+        
+        if not (1 <= data["duration"] <= 1000):
+            return jsonify({"error":"Invalid duration provided"}), 400
+        
+        try:
+            datetime.strptime(data.get('date'), '%Y-%m-%d')
+        except ValueError:
+            return {"error": "Invalid date format, should be YYYY-MM-DD"}, 400
 
         calories_per_hour_mean = get_training_by_id(uid, training_id).get('calories_per_hour_mean')
 
         # Calculate calories burned based on duration and calories_per_hour
         duration = data.get('duration')
-        if not isinstance(duration, (int, float)) or duration <= 0:
-            return jsonify({'error': 'Invalid duration provided'}), 400
 
         # Calculate calories burned
         calories_burned = round((calories_per_hour_mean / 60) * duration)

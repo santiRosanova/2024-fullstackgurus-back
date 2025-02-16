@@ -1,10 +1,15 @@
 from firebase_setup import db, storage_client
 from urllib.parse import urlparse, unquote
+from app.services.category_service import get_category_by_id
 
 # Save Exercise
 def save_exercise(uid, name, calories_per_hour, public, category_id, training_muscle, image_url):
     try:
-        exercise_ref = db.collection('exercises').document()  # Create a new document with a generated ID
+        check_category_exists = get_category_by_id(uid, category_id)
+        if not check_category_exists:
+            return False, None
+        
+        exercise_ref = db.collection('exercises').document()
         exercise_data = {
             'name': name,
             'calories_per_hour': calories_per_hour,
@@ -94,10 +99,9 @@ def update_exercise(uid, exercise_id, update_data, old_image_url):
         print(f"Error updating exercise in Firestore: {e}")
         return False
 
-# Get all excercices that exist, even if public or private, for the app integration
 def get_all_exercises():
     try:
-        exercises_ref = db.collection('exercises')
+        exercises_ref = db.collection('exercises').where('public', '==', True)
         exercises = exercises_ref.stream()
         return [
             {
@@ -106,7 +110,7 @@ def get_all_exercises():
                 "name": exercise.get("name"),
                 "public": exercise.get("public")
             }
-            for exercise in exercises  # No es necesario hacer to_dict antes
+            for exercise in exercises
         ]
 
     except Exception as e:

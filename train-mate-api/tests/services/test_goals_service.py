@@ -5,8 +5,6 @@ from app.services.goals_service import (
     get_all_goals_service,
     create_goal_service,
     get_goal_service,
-    update_goal_service,
-    delete_goal_service,
     complete_goal_service
 )
 
@@ -148,58 +146,6 @@ def test_get_goal_service_exception():
     with patch("app.services.goals_service.db.collection", side_effect=Exception("DB error")):
         result = get_goal_service("user123", "goal123")
     assert result is None
-
-def test_update_goal_service_success():
-    """
-    update_goal_service => returns updated doc dict if no exception.
-    """
-    mock_db = MagicMock()
-    mock_doc = MagicMock()
-    mock_doc.to_dict.return_value = {
-        "title": "Updated Title",
-        "description": "Updated Desc",
-        "completed": False
-    }
-
-    with patch("app.services.goals_service.db", mock_db):
-        # The final .get() returns mock_doc
-        mock_db.collection.return_value.document.return_value.collection.return_value.document.return_value.get.return_value = mock_doc
-        updated_goal = update_goal_service("user123", "goal123", {"title":"Updated Title","description":"Updated Desc"})
-    
-    assert updated_goal is not None
-    assert updated_goal["id"] == "goal123"
-    assert updated_goal["title"] == "Updated Title"
-    # Also check we called .update(...) with the provided data
-    mock_db.collection.return_value.document.return_value.collection.return_value.document.return_value.update.assert_called_once_with({
-        "title":"Updated Title",
-        "description":"Updated Desc"
-    })
-
-def test_update_goal_service_exception():
-    """
-    On exception => return None
-    """
-    with patch("app.services.goals_service.db.collection", side_effect=Exception("DB error")):
-        result = update_goal_service("user123", "goal123", {})
-    assert result is None
-
-def test_delete_goal_service_success():
-    """
-    If no exception, return True.
-    """
-    mock_db = MagicMock()
-    with patch("app.services.goals_service.db", mock_db):
-        success = delete_goal_service("user123", "goalXYZ")
-    assert success is True
-    mock_db.collection.return_value.document.return_value.collection.return_value.document.return_value.delete.assert_called_once()
-
-def test_delete_goal_service_exception():
-    """
-    If exception => return False.
-    """
-    with patch("app.services.goals_service.db.collection", side_effect=Exception("DB error")):
-        success = delete_goal_service("user123", "goalXYZ")
-    assert success is False
 
 def test_complete_goal_service_success():
     """

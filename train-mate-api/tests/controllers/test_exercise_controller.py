@@ -41,7 +41,7 @@ def test_save_exercise_success(client):
     data = {
         "name": "Push-ups",
         "calories_per_hour": 500,
-        "public": True,
+        "public": False,
         "category_id": "cat123",
         "image_url": "http://example.com/image.jpg",
         "training_muscle": "Chest"
@@ -72,7 +72,7 @@ def test_save_exercise_validation_error(client):
     # Missing calories_per_hour
     data = {
         "name": "Push-ups",
-        "public": True,
+        "public": False,
         "category_id": "cat123",
         "image_url": "http://example.com/image.jpg",
         "training_muscle": "Chest"
@@ -94,7 +94,7 @@ def test_save_exercise_invalid_token(client):
     data = {
         "name": "Push-ups",
         "calories_per_hour": 500,
-        "public": True,
+        "public": False,
         "category_id": "cat123",
         "image_url": "http://example.com/image.jpg",
         "training_muscle": "Chest"
@@ -119,7 +119,7 @@ def test_save_exercise_failure_service(client):
     data = {
         "name": "Push-ups",
         "calories_per_hour": 500,
-        "public": True,
+        "public": False,
         "category_id": "cat123",
         "image_url": "http://example.com/image.jpg",
         "training_muscle": "Chest"

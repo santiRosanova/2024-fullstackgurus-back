@@ -9,16 +9,19 @@ trainings_bp = Blueprint('trainings_bp', __name__)
 @trainings_bp.route('/save-training', methods=['POST'])
 def save_training():
     try:
-        # Extract and validate the token
         token = request.headers.get('Authorization').split(' ')[1]
         uid = verify_token_service(token)
         if uid is None:
             return jsonify({'error': 'Invalid token'}), 401
 
-        # Get request data
         data = request.get_json()
 
-        # Calculate calories per hour mean
+        if not data.get('exercises'):
+            return jsonify({'error': 'Missing exercises'}), 400
+        
+        if not data.get('name'):
+            return jsonify({'error': 'Missing training name'}), 400
+
         exercises = data.get('exercises')
         calories_per_hour_sum = 0
         exercises_ids = []
@@ -41,7 +44,6 @@ def save_training():
 @trainings_bp.route('/get-trainings', methods=['GET'])
 def get_trainings():
     try:
-        # Extract and validate the token
         token = request.headers.get('Authorization').split(' ')[1]
         uid = verify_token_service(token)
         if uid is None:
@@ -57,7 +59,6 @@ def get_trainings():
 @trainings_bp.route('/get-training/<training_id>', methods=['GET'])
 def get_training_by_id(training_id):
     try:
-        # Extract and validate the token
         token = request.headers.get('Authorization').split(' ')[1]
         uid = verify_token_service(token)
         if uid is None:
@@ -78,7 +79,6 @@ def get_training_by_id(training_id):
 def get_popular_exercises_view():
     try:
         
-        # Get the top 5 exercises by popularity
         popular_exercises = get_popular_exercises()
 
         return jsonify({'popular_exercises': popular_exercises}), 200

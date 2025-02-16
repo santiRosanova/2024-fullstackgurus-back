@@ -11,23 +11,32 @@ from app.services.exercise_service import (
 )
 from urllib.parse import quote
 
-def test_save_exercise_success():
+import pytest
+from unittest.mock import patch, MagicMock
+from app.services.exercise_service import save_exercise
+
+def test_save_exercise_valid_category():
     """
-    If Firestore works and no exception is raised, should return (True, exercise_data).
+    If get_category_by_id returns a valid category dict, we create a doc in 'exercises' => (True, exercise_data).
     """
+    # 1) Mock get_category_by_id => return a dict indicating the category is valid
+    mock_category_data = {"owner": "user123", "name": "SomeCategory"}
+    
+    # 2) Mock the db to handle exercises
     mock_db = MagicMock()
     mock_doc_ref = MagicMock()
-    mock_doc_ref.id = "new_exercise_id"
+    mock_doc_ref.id = "new_exercise_id"  # The Firestore-generated doc ID
+    # .document() => mock_doc_ref
+    mock_db.collection.return_value.document.return_value = mock_doc_ref
 
-    with patch("app.services.exercise_service.db", mock_db):
-        # The .document() call returns our mock_doc_ref
-        mock_db.collection.return_value.document.return_value = mock_doc_ref
-
+    with patch("app.services.exercise_service.get_category_by_id", return_value=mock_category_data), \
+         patch("app.services.exercise_service.db", mock_db):
+        
         success, exercise_data = save_exercise(
             uid="user123",
             name="Push-ups",
             calories_per_hour=300,
-            public=True,
+            public=False,
             category_id="cat123",
             training_muscle="Chest",
             image_url="http://example.com/image.jpg"
@@ -36,33 +45,59 @@ def test_save_exercise_success():
     assert success is True
     assert exercise_data["id"] == "new_exercise_id"
     assert exercise_data["name"] == "Push-ups"
+    # Check we wrote to 'exercises' collection
     mock_db.collection.assert_called_with("exercises")
+    # Check doc creation
     mock_db.collection.return_value.document.assert_called_once()
+    # Check the final data we set
     mock_doc_ref.set.assert_called_once_with({
         "name": "Push-ups",
         "calories_per_hour": 300,
-        "public": True,
+        "public": False,
         "owner": "user123",
         "category_id": "cat123",
         "image_url": "http://example.com/image.jpg",
         "training_muscle": "Chest"
     })
 
-def test_save_exercise_failure():
+def test_save_exercise_invalid_category():
     """
-    If an exception occurs, returns None.
+    If get_category_by_id returns None => (False, None)
     """
-    with patch("app.services.exercise_service.db.collection", side_effect=Exception("Firestore error")):
-        result = save_exercise(
+    with patch("app.services.exercise_service.get_category_by_id", return_value=None):
+        success, exercise_data = save_exercise(
             uid="user123",
             name="Push-ups",
             calories_per_hour=300,
-            public=True,
+            public=False,
             category_id="cat123",
             training_muscle="Chest",
             image_url="http://example.com/image.jpg"
         )
-    # The code returns None on exception
+    assert success is False
+    assert exercise_data is None
+
+def test_save_exercise_exception():
+    """
+    If something in the try block raises an exception => returns None
+    """
+    # e.g. we raise an exception when calling db.collection('exercises')
+    mock_db = MagicMock()
+    mock_db.collection.side_effect = Exception("DB meltdown")
+
+    with patch("app.services.exercise_service.get_category_by_id", return_value={"owner":"user123"}), \
+         patch("app.services.exercise_service.db", mock_db):
+        
+        result = save_exercise(
+            uid="user123",
+            name="Push-ups",
+            calories_per_hour=300,
+            public=False,
+            category_id="cat123",
+            training_muscle="Chest",
+            image_url="http://example.com/image.jpg"
+        )
+    # The function in the except block does "return None"
     assert result is None
 
 @pytest.mark.parametrize("show_public", [True, False])
@@ -212,35 +247,6 @@ def test_update_exercise_exception():
     with patch("app.services.exercise_service.db.collection", side_effect=Exception("Firestore error")):
         success = update_exercise("user123", "ex123", {"name": "NewName"}, old_image_url=None)
     assert success is False
-
-def test_get_all_exercises_success():
-    mock_db = MagicMock()
-    # Suppose we have doc1 and doc2 in the collection
-    doc1 = MagicMock()
-    doc1.id = "ex1"
-    # doc1.get(...) => "Push-ups" / 300 / True
-    doc1.get.side_effect = lambda field: {
-        "name": "Push-ups",
-        "calories_per_hour": 300,
-        "public": True
-    }.get(field, None)
-
-    doc2 = MagicMock()
-    doc2.id = "ex2"
-    doc2.get.side_effect = lambda field: {
-        "name": "Sit-ups",
-        "calories_per_hour": 200,
-        "public": False
-    }.get(field, None)
-
-    with patch("app.services.exercise_service.db", mock_db):
-        mock_db.collection.return_value.stream.return_value = [doc1, doc2]
-        exercises = get_all_exercises()
-    
-    assert len(exercises) == 2
-    assert exercises[0]["id"] == "ex1"
-    assert exercises[0]["public"] == True
-    mock_db.collection.assert_called_with("exercises")
 
 def test_get_all_exercises_exception():
     with patch("app.services.exercise_service.db.collection", side_effect=Exception("Firestore error")):

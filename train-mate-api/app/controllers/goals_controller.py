@@ -1,10 +1,9 @@
 from flask import Blueprint, request, jsonify
 from app.services.auth_service import verify_token_service
-from app.services.goals_service import complete_goal_service, get_all_goals_service, create_goal_service, get_goal_service, update_goal_service, delete_goal_service
+from app.services.goals_service import complete_goal_service, get_all_goals_service, create_goal_service, get_goal_service
 
 goals_bp = Blueprint('goals_bp', __name__)
 
-# Endpoint to get all goals for a user
 @goals_bp.route('/get-all-goals', methods=['GET'])
 def get_all_goals():
     try:
@@ -29,7 +28,6 @@ def get_all_goals():
         return jsonify({"error": "Something went wrong"}), 500
 
 
-# Endpoint to create a new goal
 @goals_bp.route('/create-goal', methods=['POST'])
 def create_goal():
     try:
@@ -45,6 +43,15 @@ def create_goal():
         data = request.get_json()
         if not data:
             return jsonify({"error": "Invalid data"}), 400
+        
+        if not data.get("title") or not data.get("startDate") or not data.get("endDate"):
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        if not isinstance(data.get("title"), str):
+            return jsonify({"error": "Title must be a string"}), 400
+        
+        if 'description' in data and not isinstance(data.get("description"), str):
+            return jsonify({"error": "Description must be a string"}), 400
 
         goal = create_goal_service(uid, data)
         
@@ -62,8 +69,6 @@ def create_goal():
         return jsonify({"error": "Something went wrong"}), 500
 
 
-
-# Endpoint to get a specific goal
 @goals_bp.route('/get-goal/<goal_id>', methods=['GET'])
 def get_goal(goal_id):
     try:
@@ -84,57 +89,6 @@ def get_goal(goal_id):
 
     except Exception as e:
         print(f"Error getting goal: {e}")
-        return jsonify({"error": "Something went wrong"}), 500
-
-
-# Endpoint to update a goal
-@goals_bp.route('/update-goal/<goal_id>', methods=['PUT'])
-def update_goal(goal_id):
-    try:
-        token = request.headers.get('Authorization')
-        if not token or 'Bearer ' not in token:
-            return jsonify({"error": "Authorization token missing"}), 403
-
-        token = token.split(' ')[1]
-        uid = verify_token_service(token)
-        if not uid:
-            return jsonify({"error": "Invalid token"}), 403
-
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Invalid data"}), 400
-
-        updated_goal = update_goal_service(uid, goal_id, data)
-        if not updated_goal:
-            return jsonify({"error": "Failed to update goal"}), 500
-
-        return jsonify(updated_goal), 200
-
-    except Exception as e:
-        print(f"Error updating goal: {e}")
-        return jsonify({"error": "Something went wrong"}), 500
-
-
-# Endpoint to delete a goal
-@goals_bp.route('/delete-goal/<goal_id>', methods=['DELETE'])
-def delete_goal(goal_id):
-    try:
-        token = request.headers.get('Authorization')
-        if not token or 'Bearer ' not in token:
-            return jsonify({"error": "Authorization token missing"}), 403
-
-        token = token.split(' ')[1]
-        uid = verify_token_service(token)
-        if not uid:
-            return jsonify({"error": "Invalid token"}), 403
-
-        if not delete_goal_service(uid, goal_id):
-            return jsonify({"error": "Failed to delete goal"}), 500
-
-        return jsonify({"message": "Goal deleted successfully"}), 200
-
-    except Exception as e:
-        print(f"Error deleting goal: {e}")
         return jsonify({"error": "Something went wrong"}), 500
 
 

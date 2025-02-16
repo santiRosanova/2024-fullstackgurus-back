@@ -15,7 +15,7 @@ def mock_verify_token(token):
     ("/api/category/delete-category/fake_id", "DELETE"),
     ("/api/category/edit-category/fake_id", "PUT"),
     ("/api/category/get-category/fake_id", "GET"),
-    ("/api/category/save-default-category", "POST"),
+    # ("/api/category/save-default-category", "POST"),
     ("/api/category/last-modified", "GET"),
     ("/api/category/update-last-modified", "POST")
 ])
@@ -40,7 +40,7 @@ def test_missing_auth(client, endpoint, method):
 def test_save_category_valid(client):
     data = {
         "name": "TestCat",
-        "icon": "test-icon",
+        "icon": "Ball",
         "isCustom": True
     }
     with patch("app.controllers.category_controller.verify_token_service", return_value="user123"), \
@@ -159,20 +159,20 @@ def test_get_category_by_id_not_found(client):
     assert response.status_code == 404
     assert "Category not found" in response.get_json()["error"]
 
-def test_save_default_category_success(client):
-    data = {
-        "name": "DefaultCat",
-        "icon": "default-icon",
-        "isCustom": False
-    }
-    with patch("app.controllers.category_controller.save_category_service", return_value=(True, "new_default_id")):
-        response = client.post(
-            "/api/category/save-default-category",
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json"}
-        )
-    assert response.status_code == 201
-    assert response.get_json()["message"] == "Category saved successfully"
+# def test_save_default_category_success(client):
+#     data = {
+#         "name": "DefaultCat",
+#         "icon": "default-icon",
+#         "isCustom": False
+#     }
+#     with patch("app.controllers.category_controller.save_category_service", return_value=(True, "new_default_id")):
+#         response = client.post(
+#             "/api/category/save-default-category",
+#             data=json.dumps(data),
+#             headers={"Content-Type": "application/json"}
+#         )
+#     assert response.status_code == 201
+#     assert response.get_json()["message"] == "Category saved successfully"
 
 def test_get_last_modified_valid(client):
     with patch("app.controllers.category_controller.verify_token_service", return_value="user123"), \

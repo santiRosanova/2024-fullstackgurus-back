@@ -67,7 +67,6 @@ def create_goal_service(uid, data):
             "completed": data.get("completed", False)
         }
 
-        # Save the goal to the database
         goal_ref.set(goal_data)
         goal_data['id'] = goal_ref.id
 
@@ -90,29 +89,6 @@ def get_goal_service(uid, goal_id):
     except Exception as e:
         print(f"Error getting goal: {e}")
         return None
-
-# Update a goal
-def update_goal_service(uid, goal_id, data):
-    try:
-        goal_ref = db.collection('goals').document(uid).collection('user_goals').document(goal_id)
-        goal_ref.update(data)
-        updated_goal = goal_ref.get().to_dict()
-        updated_goal['id'] = goal_id
-        return updated_goal
-    except Exception as e:
-        print(f"Error updating goal: {e}")
-        return None
-
-# Delete a goal
-def delete_goal_service(uid, goal_id):
-    try:
-        goal_ref = db.collection('goals').document(uid).collection('user_goals').document(goal_id)
-        goal_ref.delete()
-        return True
-    except Exception as e:
-        print(f"Error deleting goal: {e}")
-        return False
-
 
 def complete_goal_service(uid, goal_id):
     try:

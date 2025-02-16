@@ -21,7 +21,7 @@ def save_user_workout(uid, data, calories_burned):
     if 'date' in data and isinstance(data['date'], str):
         try:
             date_obj = datetime.strptime(data['date'], '%Y-%m-%d')
-            date_obj = date_obj.replace(hour=0, minute=0) # Set default time a las 00:00 AM porque sino por el uso horario Firebase te lo tira -3 horas al dia anterior
+            date_obj = date_obj.replace(hour=10, minute=0) # Set default time a las 04:00 AM porque sino por el uso horario Firebase te lo tira -3 horas al dia anterior
         except ValueError:
             raise ValueError("Invalid date format. Use 'YYYY-MM-DD'.")
     else:

@@ -13,7 +13,7 @@ def add_physical_data_service(uid, body_fat, body_muscle, weight, date):
         physical_data_ref = user_ref.collection('user_physical_data').document(date)
 
         date_obj = datetime.strptime(date, '%Y-%m-%d')
-        date_obj = date_obj.replace(hour=0, minute=0)
+        date_obj = date_obj.replace(hour=10, minute=0)
 
         physical_data_ref.set({
             'weight': weight,
